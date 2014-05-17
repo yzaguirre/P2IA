@@ -47,6 +47,90 @@
 	(slot posicionamiento (type INTEGER)) ; PORTEROS
 	(slot reflejos (type INTEGER)) ; PORTEROS
 )
+(defglobal ?*rival* = "")
+(defglobal ?*EstrategiaRival* = "Defensiva")
+(defglobal ?*EstrategiaBolivia* = "Defensiva")
+(defglobal ?*Defensa* = "Bien")
+(defglobal ?*Ataque* = "Bien")
+(deftemplate tiene-goles
+	(slot equipo (type STRING))
+	(slot goles (type INTEGER))
+)
+(defrule menu-o9
+	?f <- (menu-oficial 8)
+=>
+	(retract ?f)
+)
+(defrule menu-o8
+	?f <- (menu-oficial 7)
+=>
+	(printout t "se recomienda" crlf)
+	(retract ?f)
+	(assert (menu-oficial 0))
+)
+(defrule menu-o7
+	?f <- (menu-oficial 6)
+=>
+	(printout t "Bolivia esta atacando actualmente: " ?*Ataque* crlf "La nueva es [Bien|Mal]: ")
+	(bind ?*Ataque* (readline))
+	(retract ?f)
+	(assert (menu-oficial 0))
+)
+(defrule menu-o6
+	?f <- (menu-oficial 5)
+=>
+	(printout t "Bolivia se esta defendiendo actualmente: " ?*Defensa* crlf "La nueva es [Bien|Mal]: ")
+	(bind ?*Defensa* (readline))
+	(retract ?f)
+	(assert (menu-oficial 0))
+)
+(defrule menu-o5
+	?f <- (menu-oficial 4)
+=>
+	(printout t "Bolivia tiene estrategia actual: " ?*EstrategiaBolivia* crlf "La nueva es [Ofensiva|Defensiva]: ")
+	(bind ?*EstrategiaBolivia* (readline))
+	(retract ?f)
+	(assert (menu-oficial 0))
+)
+(defrule menu-o4
+	?f <- (menu-oficial 3)
+=>
+	(printout t ?*rival* " tiene estrategia actual: " ?*EstrategiaRival* crlf "La nueva es [Ofensiva|Defensiva]: ")
+	(bind ?*EstrategiaRival* (readline))
+	(retract ?f)
+	(assert (menu-oficial 0))
+)
+(defrule menu-o3
+	?f <- (menu-oficial 2)
+	?tg <- (tiene-goles (equipo ?r) (goles ?goles))
+	(test (eq ?r ?*rival*))
+=>
+	(bind ?g (+ ?goles 1))
+	(modify ?tg (goles ?g))
+	(printout t "Marcador" ?*rival* ": " ?g)
+	(retract ?f)
+	(assert (menu-oficial 0))
+)
+(defrule menu-o2
+	?f <- (menu-oficial 1)
+	?tg <- (tiene-goles (equipo "Bolivia") (goles ?goles))
+=>
+	(bind ?g (+ ?goles 1))
+	(modify ?tg (goles ?g))
+	(printout t "Marcador Bolivia: " ?g)
+	(retract ?f)
+	(assert (menu-oficial 0))
+)
+(defrule menu-oficial1
+	?f <- (menu-oficial 0)
+=>
+	(printout t crlf crlf "Opciones de ingreso para estado del partido:" crlf "1.) Nuestro Equipo anotó gol" crlf "2.) Equipo Rival anotó gol" crlf "3.) Equipo Rival tiene estrategia..." crlf "4.) Equipo Bolivia tiene estrategia..." crlf "5.) Nuestra defensa cambio para..." crlf "6.) Nuestro ataque cambio para..." crlf "7.) Solicitar Recomendacion" crlf "8.) Salir" crlf) 
+	(printout t "Elija opcion [1-7]: ")
+	(bind ?opcion (read))
+	(retract ?f)
+	(assert (menu-oficial ?opcion))
+	(printout t crlf)
+)
 (defrule seleccion-jugador
 	(declare (salience 201))
 	(initial-fact)
@@ -84,6 +168,7 @@
 	(printout t crlf "Ingrese dorsal de jugador 11: ")
 	(bind ?dorsal (read))
 	(assert (jugador-en-pos ?dorsal 11))
+	(assert (menu-oficial 0))
 )
 (defrule jugadores
 	(declare (salience 202))
@@ -97,7 +182,10 @@
 	(initial-fact)
 =>
 	(printout t crlf "Seleccione Pais Rival: ")
-	(assert (rival =(readline)))
+	(bind ?*rival* (readline))
+	(assert (tiene-goles (equipo ?*rival*) (goles 0)))
+	(assert (tiene-goles (equipo "Bolivia") (goles 0)))
+	;(assert (rival =(readline)))
 	(printout t crlf "JUGADORES SELECCION BOLIVIA" crlf)
 )
 (defrule mostrar-paises
